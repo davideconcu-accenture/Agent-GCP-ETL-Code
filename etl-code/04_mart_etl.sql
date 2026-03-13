@@ -10,7 +10,7 @@
 -- Saldo attuale di ogni conto come dato di sintesi per reporting.
 -- Una riga per conto. Dipende da stg_conti e stg_movimenti.
 -- ============================================================
-CREATE OR REPLACE TABLE `your_project.banca_mart.saldi_correnti` AS
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_mart.saldi_correnti` AS
 
 WITH movimenti_per_conto AS (
   SELECT
@@ -23,7 +23,7 @@ WITH movimenti_per_conto AS (
     SUM(importo)                                 AS variazione_netta,
     MAX(data_contabile)                          AS ultimo_movimento_ts,
     MAX(data_valuta)                             AS ultima_data_valuta
-  FROM `your_project.banca_staging.stg_movimenti`
+  FROM `phrasal-method-484415-g7.banca_staging.stg_movimenti`
   GROUP BY id_conto
 )
 
@@ -61,15 +61,15 @@ SELECT
 
   CURRENT_TIMESTAMP()                            AS _loaded_at
 
-FROM `your_project.banca_staging.stg_conti` c
+FROM `phrasal-method-484415-g7.banca_staging.stg_conti` c
 
 LEFT JOIN movimenti_per_conto m
   ON c.id_conto = m.id_conto
 
-LEFT JOIN `your_project.banca_staging.stg_filiali` f
+LEFT JOIN `phrasal-method-484415-g7.banca_staging.stg_filiali` f
   ON c.id_filiale = f.id_filiale
 
-LEFT JOIN `your_project.banca_staging.stg_clienti` k
+LEFT JOIN `phrasal-method-484415-g7.banca_staging.stg_clienti` k
   ON c.id_cliente = k.codice_fiscale;
 
 
@@ -78,7 +78,7 @@ LEFT JOIN `your_project.banca_staging.stg_clienti` k
 -- KPI di portafoglio per cliente: conti, saldo totale, operatività.
 -- Dipende da: stg_clienti, stg_conti, saldi_correnti, stg_movimenti
 -- ============================================================
-CREATE OR REPLACE TABLE `your_project.banca_mart.metriche_cliente` AS
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_mart.metriche_cliente` AS
 SELECT
   k.id_cliente,
   k.codice_fiscale,
@@ -101,15 +101,15 @@ SELECT
 
   CURRENT_TIMESTAMP()                            AS _loaded_at
 
-FROM `your_project.banca_staging.stg_clienti` k
+FROM `phrasal-method-484415-g7.banca_staging.stg_clienti` k
 
-LEFT JOIN `your_project.banca_staging.stg_conti` c
+LEFT JOIN `phrasal-method-484415-g7.banca_staging.stg_conti` c
   ON k.id_cliente = c.id_cliente
 
-LEFT JOIN `your_project.banca_mart.saldi_correnti` sc
+LEFT JOIN `phrasal-method-484415-g7.banca_mart.saldi_correnti` sc
   ON c.id_conto = sc.id_conto
 
-LEFT JOIN `your_project.banca_staging.stg_movimenti` m
+LEFT JOIN `phrasal-method-484415-g7.banca_staging.stg_movimenti` m
   ON c.id_conto = m.id_conto
 
 GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9;
@@ -121,7 +121,7 @@ GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9;
 -- Conti inclusi: CONTO_RISPARMIO e CONTO_DEPOSITO
 -- Dipende da: stg_conti, saldi_correnti, stg_tassi_interesse
 -- ============================================================
-CREATE OR REPLACE TABLE `your_project.banca_mart.analisi_rendimento` AS
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_mart.analisi_rendimento` AS
 SELECT
   c.id_conto,
   c.iban,
@@ -149,12 +149,12 @@ SELECT
 
   CURRENT_TIMESTAMP()                           AS _loaded_at
 
-FROM `your_project.banca_staging.stg_conti` c
+FROM `phrasal-method-484415-g7.banca_staging.stg_conti` c
 
-JOIN `your_project.banca_mart.saldi_correnti` sc
+JOIN `phrasal-method-484415-g7.banca_mart.saldi_correnti` sc
   ON c.id_conto = sc.id_conto
 
-JOIN `your_project.banca_staging.stg_tassi_interesse` t
+JOIN `phrasal-method-484415-g7.banca_staging.stg_tassi_interesse` t
   ON c.tipo_conto = t.tipo_prodotto
 
 WHERE c.tipo_conto IN ('CONTO_RISPARMIO', 'CONTO_DEPOSITO')

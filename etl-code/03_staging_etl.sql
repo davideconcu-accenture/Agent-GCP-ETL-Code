@@ -21,7 +21,7 @@
 -- In caso di parità, si tiene la riga con rating migliore
 -- (ordine alfabetico AAA > AA > A > BBB > ..., qui usiamo ASC).
 -- ============================================================
-CREATE OR REPLACE TABLE `your_project.banca_staging.stg_clienti` AS
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_staging.stg_clienti` AS
 SELECT
   id_cliente,
   UPPER(TRIM(codice_fiscale))        AS codice_fiscale,
@@ -47,7 +47,7 @@ FROM (
       PARTITION BY id_cliente
       ORDER BY data_acquisizione ASC, rating_interno ASC
     )                                AS _rn
-  FROM `your_project.banca_raw.clienti`
+  FROM `phrasal-method-484415-g7.banca_raw.clienti`
   WHERE id_cliente IS NOT NULL
     AND codice_fiscale IS NOT NULL
 )
@@ -58,7 +58,7 @@ WHERE _rn = 1;
 -- TABLE: banca_staging.stg_filiali
 -- Pulizia semplice.
 -- ============================================================
-CREATE OR REPLACE TABLE `your_project.banca_staging.stg_filiali` AS
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_staging.stg_filiali` AS
 SELECT
   id_filiale,
   TRIM(nome_filiale)                 AS nome_filiale,
@@ -71,7 +71,7 @@ SELECT
   num_dipendenti,
   data_apertura,
   CURRENT_TIMESTAMP()                AS _loaded_at
-FROM `your_project.banca_raw.filiali`
+FROM `phrasal-method-484415-g7.banca_raw.filiali`
 WHERE id_filiale IS NOT NULL;
 
 
@@ -79,7 +79,7 @@ WHERE id_filiale IS NOT NULL;
 -- TABLE: banca_staging.stg_conti
 -- Pulizia e normalizzazione.
 -- ============================================================
-CREATE OR REPLACE TABLE `your_project.banca_staging.stg_conti` AS
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_staging.stg_conti` AS
 SELECT
   id_conto,
   id_cliente,
@@ -96,7 +96,7 @@ SELECT
     ELSE FALSE
   END                                AS is_attivo,
   CURRENT_TIMESTAMP()                AS _loaded_at
-FROM `your_project.banca_raw.conti`
+FROM `phrasal-method-484415-g7.banca_raw.conti`
 WHERE id_conto IS NOT NULL
   AND id_cliente IS NOT NULL
   AND saldo_iniziale IS NOT NULL;
@@ -106,7 +106,7 @@ WHERE id_conto IS NOT NULL
 -- TABLE: banca_staging.stg_tassi_interesse
 -- Solo tassi attualmente in vigore.
 -- ============================================================
-CREATE OR REPLACE TABLE `your_project.banca_staging.stg_tassi_interesse` AS
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_staging.stg_tassi_interesse` AS
 SELECT
   id_tasso,
   UPPER(TRIM(tipo_prodotto))         AS tipo_prodotto,
@@ -115,7 +115,7 @@ SELECT
   data_fine,
   TRIM(note)                         AS note,
   CURRENT_TIMESTAMP()                AS _loaded_at
-FROM `your_project.banca_raw.tassi_interesse`
+FROM `phrasal-method-484415-g7.banca_raw.tassi_interesse`
 WHERE id_tasso IS NOT NULL
   AND tasso_annuo > 0
   AND data_inizio <= CURRENT_DATE()
@@ -126,7 +126,7 @@ WHERE id_tasso IS NOT NULL
 -- TABLE: banca_staging.stg_movimenti
 -- Deduplicazione, normalizzazione e calcolo importo con segno.
 -- ============================================================
-CREATE OR REPLACE TABLE `your_project.banca_staging.stg_movimenti` AS
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_staging.stg_movimenti` AS
 SELECT
   id_movimento,
   id_conto,
@@ -154,7 +154,7 @@ FROM (
       PARTITION BY id_conto, DATE(data_contabile)
       ORDER BY data_contabile DESC
     )                     AS _rn
-  FROM `your_project.banca_raw.movimenti`
+  FROM `phrasal-method-484415-g7.banca_raw.movimenti`
   WHERE id_movimento IS NOT NULL
     AND id_conto     IS NOT NULL
     AND importo      > 0

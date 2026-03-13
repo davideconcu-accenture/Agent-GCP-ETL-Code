@@ -10,12 +10,12 @@
 --   - Sistema ALM (Asset Liability Management): tassi e prodotti
 --
 -- SETUP PREREQUISITO:
---   Sostituire 'your_project' con il proprio GCP Project ID.
+--   Sostituire 'phrasal-method-484415-g7' con il proprio GCP Project ID.
 --   Eseguire da BigQuery CLI o Console:
 --
---   bq mk --dataset --location=EU your_project:banca_raw
---   bq mk --dataset --location=EU your_project:banca_staging
---   bq mk --dataset --location=EU your_project:banca_mart
+--   bq mk --dataset --location=EU phrasal-method-484415-g7:banca_raw
+--   bq mk --dataset --location=EU phrasal-method-484415-g7:banca_staging
+--   bq mk --dataset --location=EU phrasal-method-484415-g7:banca_mart
 --
 -- ============================================================
 
@@ -24,7 +24,7 @@
 -- TABLE: banca_raw.clienti
 -- Anagrafica clienti esportata dal Core Banking.
 -- ============================================================
-CREATE OR REPLACE TABLE `your_project.banca_raw.clienti` (
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_raw.clienti` (
   id_cliente        STRING   NOT NULL OPTIONS(description='Codice univoco cliente (es. CLI001)'),
   codice_fiscale    STRING            OPTIONS(description='Codice Fiscale - 16 caratteri alfanumerici'),
   nome              STRING,
@@ -47,7 +47,7 @@ CREATE OR REPLACE TABLE `your_project.banca_raw.clienti` (
 -- TABLE: banca_raw.filiali
 -- Anagrafica delle filiali bancarie.
 -- ============================================================
-CREATE OR REPLACE TABLE `your_project.banca_raw.filiali` (
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_raw.filiali` (
   id_filiale      STRING   NOT NULL OPTIONS(description='Codice filiale (es. FIL001)'),
   nome_filiale    STRING,
   indirizzo       STRING,
@@ -67,7 +67,7 @@ CREATE OR REPLACE TABLE `your_project.banca_raw.filiali` (
 -- Tipi: CONTO_CORRENTE | CONTO_RISPARMIO | CONTO_DEPOSITO | CONTO_CORRENTE_BUSINESS
 -- Un cliente può avere più conti.
 -- ============================================================
-CREATE OR REPLACE TABLE `your_project.banca_raw.conti` (
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_raw.conti` (
   id_conto          STRING   NOT NULL OPTIONS(description='ID interno conto (es. CC001)'),
   id_cliente        STRING            OPTIONS(description='FK verso clienti.id_cliente'),
   iban              STRING            OPTIONS(description='IBAN completo (27 caratteri IT)'),
@@ -93,7 +93,7 @@ CREATE OR REPLACE TABLE `your_project.banca_raw.conti` (
 --   Il campo 'importo' è SEMPRE POSITIVO.
 --   Il segno deve essere applicato in base a tipo_movimento.
 -- ============================================================
-CREATE OR REPLACE TABLE `your_project.banca_raw.movimenti` (
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_raw.movimenti` (
   id_movimento      STRING    NOT NULL OPTIONS(description='ID univoco movimento'),
   id_conto          STRING    NOT NULL OPTIONS(description='FK verso conti.id_conto'),
   data_contabile    TIMESTAMP          OPTIONS(description='Data e ora di contabilizzazione (UTC)'),
@@ -115,7 +115,7 @@ CREATE OR REPLACE TABLE `your_project.banca_raw.movimenti` (
 -- Per ogni tipo_prodotto esiste un solo tasso attivo alla volta
 -- (le date di validità non si sovrappongono).
 -- ============================================================
-CREATE OR REPLACE TABLE `your_project.banca_raw.tassi_interesse` (
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_raw.tassi_interesse` (
   id_tasso        STRING   NOT NULL OPTIONS(description='ID tasso (es. TASSO001)'),
   tipo_prodotto   STRING            OPTIONS(description='Tipo conto a cui si applica il tasso'),
   tasso_annuo     NUMERIC           OPTIONS(description='Tasso annuo in percentuale: 1.5 significa 1.5% NON 150%'),
