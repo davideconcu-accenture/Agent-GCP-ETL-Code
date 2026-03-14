@@ -14,8 +14,7 @@
 --   Eseguire da BigQuery CLI o Console:
 --
 --   bq mk --dataset --location=EU phrasal-method-484415-g7:banca_raw
---   bq mk --dataset --location=EU phrasal-method-484415-g7:banca_staging
---   bq mk --dataset --location=EU phrasal-method-484415-g7:banca_mart
+--   (tutti i layer raw, staging e mart sono nello stesso dataset banca_raw)
 --
 -- ============================================================
 
@@ -122,4 +121,108 @@ CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_raw.tassi_interesse` (
   data_inizio     DATE              OPTIONS(description='Inizio validità tasso'),
   data_fine       DATE              OPTIONS(description='Fine validità tasso (NULL = ancora in vigore)'),
   note            STRING
+);
+
+
+-- ============================================================
+-- TABLE: banca_raw.carte
+-- Carte di debito e credito associate ai conti.
+-- ============================================================
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_raw.carte` (
+  id_carta                STRING   NOT NULL OPTIONS(description='ID univoco carta (es. CAR001)'),
+  id_conto                STRING            OPTIONS(description='FK verso conti.id_conto - conto di addebito'),
+  id_cliente              STRING            OPTIONS(description='FK verso clienti.id_cliente - intestatario'),
+  tipo_carta              STRING            OPTIONS(description='DEBITO | CREDITO | PREPAGATA'),
+  circuito                STRING            OPTIONS(description='VISA | MASTERCARD | AMEX | MAESTRO'),
+  numero_carte_cifrato    STRING            OPTIONS(description='Ultimi 4 cifre della carta (es. **** **** **** 1234)'),
+  data_emissione          DATE              OPTIONS(description='Data emissione carta'),
+  data_scadenza           DATE              OPTIONS(description='Data scadenza carta (MM/AAAA)'),
+  stato                   STRING            OPTIONS(description='ATTIVA | BLOCCATA | SCADUTA | CANCELLATA'),
+  plafond_mensile         NUMERIC           OPTIONS(description='Plafond mensile carta di credito (EUR), NULL per debito'),
+  utilizzo_mese_corrente  NUMERIC           OPTIONS(description='Utilizzo corrente del plafond (EUR)'),
+  canale_blocco           STRING            OPTIONS(description='APP | FILIALE | TELEFONO | NULL se non bloccata'),
+  data_blocco             DATE              OPTIONS(description='Data blocco carta, NULL se non bloccata'),
+  motivo_blocco           STRING            OPTIONS(description='SMARRIMENTO | FURTO | FRODE | RICHIESTA_CLIENTE | NULL'),
+  contactless             BOOL              OPTIONS(description='Abilita pagamenti contactless'),
+  pin_tentativi_falliti   INT64             OPTIONS(description='Numero tentativi PIN falliti (max 3 prima del blocco)')
+);
+
+
+-- ============================================================
+-- TABLE: banca_raw.pacchetti
+-- Pacchetti di prodotti/servizi offerti dalla banca.
+-- ============================================================
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_raw.pacchetti` (
+  id_pacchetto            STRING   NOT NULL OPTIONS(description='Codice univoco pacchetto (es. PKG001)'),
+  nome_pacchetto          STRING            OPTIONS(description='Nome commerciale del pacchetto'),
+  segmento_target         STRING            OPTIONS(description='Segmento target: RETAIL | PRIVATE | CORPORATE | ALL'),
+  canone_mensile          NUMERIC           OPTIONS(description='Canone mensile in EUR (0 = gratuito)'),
+  commissione_prelievo    NUMERIC           OPTIONS(description='Commissione per prelievo ATM (EUR)'),
+  num_bonifici_gratuiti   INT64             OPTIONS(description='Numero di bonifici gratuiti al mese'),
+  limite_pagamenti_pos    NUMERIC           OPTIONS(description='Limite giornaliero pagamenti POS (EUR)'),
+  internet_banking        BOOL              OPTIONS(description='Servizio di internet banking incluso'),
+  mobile_app              BOOL              OPTIONS(description='App mobile inclusa'),
+  carta_inclusa           STRING            OPTIONS(description='Tipo carta inclusa: NESSUNA | DEBITO | CREDITO'),
+  cassetta_sicurezza      BOOL              OPTIONS(description='Cassetta di sicurezza inclusa'),
+  data_lancio             DATE              OPTIONS(description='Data inizio commercializzazione'),
+  data_fine_vendita       DATE              OPTIONS(description='Data fine vendita (NULL = ancora disponibile)'),
+  note                    STRING
+);
+
+
+-- ============================================================
+-- TABLE: banca_raw.contratti_pacchetto
+-- Associazione cliente-pacchetto (contratti attivi e storici).
+-- ============================================================
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_raw.contratti_pacchetto` (
+  id_contratto            STRING   NOT NULL OPTIONS(description='ID univoco contratto (es. CNT001)'),
+  id_cliente              STRING            OPTIONS(description='FK verso clienti.id_cliente'),
+  id_pacchetto            STRING            OPTIONS(description='FK verso pacchetti.id_pacchetto'),
+  id_conto_principale     STRING            OPTIONS(description='FK verso conti.id_conto - conto associato'),
+  data_inizio             DATE              OPTIONS(description='Data inizio contratto'),
+  data_fine               DATE              OPTIONS(description='Data fine contratto (NULL = attivo)'),
+  stato                   STRING            OPTIONS(description='ATTIVO | SOSPESO | CHIUSO'),
+  canale_sottoscrizione   STRING            OPTIONS(description='FILIALE | INTERNET_BANKING | APP | PROMOTORE'),
+  sconto_percentuale      NUMERIC           OPTIONS(description='Sconto applicato sul canone (%)'),
+  note_operatore          STRING
+);
+
+
+-- ============================================================
+-- TABLE: banca_raw.reclami
+-- Reclami e segnalazioni dei clienti.
+-- ============================================================
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_raw.reclami` (
+  id_reclamo          STRING    NOT NULL OPTIONS(description='ID univoco reclamo (es. REC001)'),
+  id_cliente          STRING             OPTIONS(description='FK verso clienti.id_cliente'),
+  id_conto            STRING             OPTIONS(description='FK verso conti.id_conto (opzionale)'),
+  categoria           STRING             OPTIONS(description='OPERATIVA | CONTRATTUALE | INFORMATIVA | FRODE | SERVIZIO_DIGITALE | ALTRO'),
+  sottocategoria      STRING             OPTIONS(description='Dettaglio categoria reclamo'),
+  descrizione         STRING             OPTIONS(description='Testo libero del reclamo'),
+  canale_reclamo      STRING             OPTIONS(description='FILIALE | EMAIL | TELEFONO | APP | RACCOMANDATA'),
+  priorita            STRING             OPTIONS(description='BASSA | MEDIA | ALTA | CRITICA'),
+  stato               STRING             OPTIONS(description='APERTO | IN_LAVORAZIONE | CHIUSO_POSITIVO | CHIUSO_NEGATIVO | ESCALATO'),
+  data_apertura       TIMESTAMP          OPTIONS(description='Data e ora apertura reclamo'),
+  data_chiusura       TIMESTAMP          OPTIONS(description='Data e ora chiusura (NULL se ancora aperto)'),
+  esito               STRING             OPTIONS(description='Descrizione esito finale'),
+  indennizzo_eur      NUMERIC            OPTIONS(description='Importo indennizzo riconosciuto al cliente (EUR), NULL se nessuno'),
+  id_operatore        STRING             OPTIONS(description='ID operatore assegnato'),
+  sla_giorni          INT64              OPTIONS(description='SLA in giorni lavorativi per la categoria'),
+  rispettato_sla      BOOL               OPTIONS(description='TRUE se chiuso entro SLA, FALSE altrimenti, NULL se ancora aperto')
+);
+
+
+-- ============================================================
+-- TABLE: banca_raw.segmenti_storia
+-- Storico SCD Type 2 dei segmenti cliente (una riga per periodo).
+-- ============================================================
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_raw.segmenti_storia` (
+  id_storia       STRING   NOT NULL OPTIONS(description='ID univoco riga (es. SEG001)'),
+  id_cliente      STRING            OPTIONS(description='FK verso clienti.id_cliente'),
+  segmento        STRING            OPTIONS(description='RETAIL | PRIVATE | CORPORATE'),
+  rating_interno  STRING            OPTIONS(description='Rating al momento del cambio segmento'),
+  data_inizio     DATE              OPTIONS(description='Data inizio validità del segmento'),
+  data_fine       DATE              OPTIONS(description='Data fine validità (NULL = corrente)'),
+  motivo_cambio   STRING            OPTIONS(description='Motivo classificazione/reclassificazione'),
+  operatore       STRING            OPTIONS(description='Utente/sistema che ha effettuato il cambio')
 );

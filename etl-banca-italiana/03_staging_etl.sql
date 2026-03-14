@@ -15,13 +15,13 @@
 
 
 -- ============================================================
--- TABLE: banca_staging.stg_clienti
+-- TABLE: banca_raw.stg_clienti
 -- Deduplicazione su id_cliente; si mantiene la riga con
 -- data_acquisizione più antica (cliente storico prioritario).
 -- In caso di parità, si tiene la riga con rating migliore
 -- (ordine alfabetico AAA > AA > A > BBB > ..., qui usiamo ASC).
 -- ============================================================
-CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_staging.stg_clienti` AS
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_raw.stg_clienti` AS
 SELECT
   id_cliente,
   UPPER(TRIM(codice_fiscale))        AS codice_fiscale,
@@ -55,10 +55,10 @@ WHERE _rn = 1;
 
 
 -- ============================================================
--- TABLE: banca_staging.stg_filiali
+-- TABLE: banca_raw.stg_filiali
 -- Pulizia semplice.
 -- ============================================================
-CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_staging.stg_filiali` AS
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_raw.stg_filiali` AS
 SELECT
   id_filiale,
   TRIM(nome_filiale)                 AS nome_filiale,
@@ -76,10 +76,10 @@ WHERE id_filiale IS NOT NULL;
 
 
 -- ============================================================
--- TABLE: banca_staging.stg_conti
+-- TABLE: banca_raw.stg_conti
 -- Pulizia e normalizzazione.
 -- ============================================================
-CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_staging.stg_conti` AS
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_raw.stg_conti` AS
 SELECT
   id_conto,
   id_cliente,
@@ -103,10 +103,10 @@ WHERE id_conto IS NOT NULL
 
 
 -- ============================================================
--- TABLE: banca_staging.stg_tassi_interesse
+-- TABLE: banca_raw.stg_tassi_interesse
 -- Solo tassi attualmente in vigore.
 -- ============================================================
-CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_staging.stg_tassi_interesse` AS
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_raw.stg_tassi_interesse` AS
 SELECT
   id_tasso,
   UPPER(TRIM(tipo_prodotto))         AS tipo_prodotto,
@@ -123,10 +123,10 @@ WHERE id_tasso IS NOT NULL
 
 
 -- ============================================================
--- TABLE: banca_staging.stg_movimenti
+-- TABLE: banca_raw.stg_movimenti
 -- Deduplicazione, normalizzazione e calcolo importo con segno.
 -- ============================================================
-CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_staging.stg_movimenti` AS
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_raw.stg_movimenti` AS
 SELECT
   id_movimento,
   id_conto,
