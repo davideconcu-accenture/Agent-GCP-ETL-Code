@@ -42,7 +42,7 @@ SELECT
                                                  AS saldo_calcolato,
   m.totale_accrediti,
   m.totale_addebiti,
-  ROUND(m.totale_accrediti - m.totale_addebiti, 2) AS variazione_netta_corretta,
+  ROUND(COALESCE(m.totale_accrediti, 0) - COALESCE(m.totale_addebiti, 0), 2) AS variazione_netta_corretta,
   ROUND(c.saldo_iniziale + COALESCE(m.totale_accrediti, 0) - COALESCE(m.totale_addebiti, 0), 2)
                                                  AS saldo_corretto_ref,
   m.num_movimenti,
@@ -70,7 +70,7 @@ LEFT JOIN `phrasal-method-484415-g7.banca_raw.stg_filiali` f
   ON c.id_filiale = f.id_filiale
 
 LEFT JOIN `phrasal-method-484415-g7.banca_raw.stg_clienti` k
-  ON c.id_cliente = k.codice_fiscale;
+  ON c.id_cliente = k.id_cliente;
 
 
 -- ============================================================
@@ -97,7 +97,7 @@ SELECT
   SUM(c.fido_accordato)                          AS fido_totale,
   MAX(m.data_contabile)                          AS data_ultima_operazione,
   MIN(m.data_contabile)                          AS data_prima_operazione,
-  DATE_DIFF(CURRENT_DATE(), MAX(DATE(m.data_contabile)), DAY) AS giorni_inattivita,
+  CASE WHEN MAX(m.data_contabile) IS NULL THEN NULL ELSE DATE_DIFF(CURRENT_DATE(), MAX(DATE(m.data_contabile)), DAY) END AS giorni_inattivita,
 
   CURRENT_TIMESTAMP()                            AS _loaded_at
 
@@ -139,8 +139,8 @@ SELECT
     DAY
   )                                              AS giorni_residui,
 
-  ROUND(sc.saldo_calcolato * t.tasso_annuo, 2)  AS interessi_annui_lordi,
-  ROUND(sc.saldo_calcolato * t.tasso_annuo / 12, 2)
+  ROUND(sc.saldo_calcolato * t.tasso_annuo / 100, 2)  AS interessi_annui_lordi,
+  ROUND(sc.saldo_calcolato * t.tasso_annuo / 100 / 12, 2)
                                                 AS interessi_mensili_lordi,
   ROUND(sc.saldo_calcolato * (t.tasso_annuo / 100), 2)
                                                 AS interessi_annui_corretti,
