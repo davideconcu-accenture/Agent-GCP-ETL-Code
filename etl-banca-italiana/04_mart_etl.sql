@@ -20,7 +20,7 @@ WITH movimenti_per_conto AS (
     COUNT(CASE WHEN tipo_movimento = 'ADDEBITO'  THEN 1 END) AS num_addebiti,
     SUM(CASE WHEN tipo_movimento = 'ACCREDITO' THEN importo ELSE 0 END) AS totale_accrediti,
     SUM(CASE WHEN tipo_movimento = 'ADDEBITO'  THEN importo ELSE 0 END) AS totale_addebiti,
-    SUM(importo)                                 AS variazione_netta,
+    SUM(importo_con_segno)                                 AS variazione_netta,
     MAX(data_contabile)                          AS ultimo_movimento_ts,
     MAX(data_valuta)                             AS ultima_data_valuta
   FROM `phrasal-method-484415-g7.banca_raw.stg_movimenti`
