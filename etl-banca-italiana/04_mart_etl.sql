@@ -1,15 +1,3 @@
--- ============================================================
--- FILE: 04_mart_etl.sql
--- PROGETTO: ETL Bancario - Banca Italiana S.p.A.
--- LAYER: MART - Tabelle analitiche per reporting e ALM
--- ============================================================
-
-
--- ============================================================
--- TABLE: banca_raw.saldi_correnti
--- Saldo attuale di ogni conto come dato di sintesi per reporting.
--- Una riga per conto. Dipende da stg_conti e stg_movimenti.
--- ============================================================
 CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_raw.saldi_correnti` AS
 
 WITH movimenti_per_conto AS (
@@ -38,7 +26,7 @@ SELECT
   c.stato,
   c.fido_accordato,
   c.saldo_iniziale,
-  ROUND(c.saldo_iniziale + COALESCE(m.variazione_netta, 0), 2)
+  ROUND(c.saldo_iniziale + COALESCE(m.totale_accrediti, 0) - COALESCE(m.totale_addebiti, 0), 2) -- FIX T-002: Corretto calcolo saldo_calcolato
                                                  AS saldo_calcolato,
   m.totale_accrediti,
   m.totale_addebiti,
@@ -104,7 +92,7 @@ SELECT
 FROM `phrasal-method-484415-g7.banca_raw.stg_clienti` k
 
 LEFT JOIN `phrasal-method-484415-g7.banca_raw.stg_conti` c
-  ON k.id_cliente = c.id_cliente
+  ON k.codice_fiscale = c.id_cliente -- FIX T-005: Join su codice_fiscale
 
 LEFT JOIN `phrasal-method-484415-g7.banca_raw.saldi_correnti` sc
   ON c.id_conto = sc.id_conto
