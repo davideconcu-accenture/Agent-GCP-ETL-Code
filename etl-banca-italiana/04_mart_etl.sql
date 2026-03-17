@@ -38,12 +38,12 @@ SELECT
   c.stato,
   c.fido_accordato,
   c.saldo_iniziale,
-  ROUND(c.saldo_iniziale + COALESCE(m.variazione_netta, 0), 2)
+  ROUND(c.saldo_iniziale + COALESCE(ROUND(m.variazione_netta, 2), 0), 2) -- FIX T-002: Arrotonda variazione_netta prima di sommare
                                                  AS saldo_calcolato,
   m.totale_accrediti,
   m.totale_addebiti,
   ROUND(m.totale_accrediti - m.totale_addebiti, 2) AS variazione_netta_corretta,
-  ROUND(c.saldo_iniziale + COALESCE(m.totale_accrediti, 0) - COALESCE(m.totale_addebiti, 0), 2)
+  ROUND(c.saldo_iniziale + COALESCE(ROUND(m.totale_accrediti, 2), 0) - COALESCE(ROUND(m.totale_addebiti, 2), 0), 2) -- FIX T-002: Arrotonda totale_accrediti e totale_addebiti prima di sommare
                                                  AS saldo_corretto_ref,
   m.num_movimenti,
   m.num_accrediti,
@@ -160,3 +160,5 @@ JOIN `phrasal-method-484415-g7.banca_raw.stg_tassi_interesse` t
 WHERE c.tipo_conto IN ('CONTO_RISPARMIO', 'CONTO_DEPOSITO')
   AND c.stato = 'ATTIVO'
   AND sc.saldo_calcolato > 0;
+
+--- FINE ---
