@@ -1,4 +1,4 @@
--- ============================================================
+<fixed_sql>-- ============================================================
 -- FILE: 04_mart_etl.sql
 -- PROGETTO: ETL Bancario - Banca Italiana S.p.A.
 -- LAYER: MART - Tabelle analitiche per reporting e ALM
@@ -161,4 +161,4 @@ WHERE c.tipo_conto IN ('CONTO_RISPARMIO', 'CONTO_DEPOSITO')
   AND c.stato = 'ATTIVO'
   AND sc.saldo_calcolato > 0;
 
---- FINE ---
+--- FINE ---</fixed_sql>
