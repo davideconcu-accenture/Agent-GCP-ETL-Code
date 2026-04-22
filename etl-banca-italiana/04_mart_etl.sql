@@ -20,7 +20,7 @@ WITH movimenti_per_conto AS (
     COUNT(CASE WHEN tipo_movimento = 'ADDEBITO'  THEN 1 END) AS num_addebiti,
     SUM(CASE WHEN tipo_movimento = 'ACCREDITO' THEN importo ELSE 0 END) AS totale_accrediti,
     SUM(CASE WHEN tipo_movimento = 'ADDEBITO'  THEN importo ELSE 0 END) AS totale_addebiti,
-    SUM(importo)                                 AS variazione_netta,
+    SUM(importo_con_segno)                       AS variazione_netta, -- BUG-FIX: Usare importo_con_segno
     MAX(data_contabile)                          AS ultimo_movimento_ts,
     MAX(data_valuta)                             AS ultima_data_valuta
   FROM `phrasal-method-484415-g7.banca_raw.stg_movimenti`
@@ -42,9 +42,6 @@ SELECT
                                                  AS saldo_calcolato,
   m.totale_accrediti,
   m.totale_addebiti,
-  ROUND(m.totale_accrediti - m.totale_addebiti, 2) AS variazione_netta_corretta,
-  ROUND(c.saldo_iniziale + COALESCE(m.totale_accrediti, 0) - COALESCE(m.totale_addebiti, 0), 2)
-                                                 AS saldo_corretto_ref,
   m.num_movimenti,
   m.num_accrediti,
   m.num_addebiti,
@@ -70,7 +67,7 @@ LEFT JOIN `phrasal-method-484415-g7.banca_raw.stg_filiali` f
   ON c.id_filiale = f.id_filiale
 
 LEFT JOIN `phrasal-method-484415-g7.banca_raw.stg_clienti` k
-  ON c.id_cliente = k.codice_fiscale;
+  ON c.id_cliente = k.id_cliente; -- BUG-FIX: Join corretto su id_cliente
 
 
 -- ============================================================
@@ -92,7 +89,6 @@ SELECT
 
   COUNT(DISTINCT c.id_conto)                     AS num_conti,
   SUM(sc.saldo_calcolato)                        AS saldo_portafoglio_totale,
-  SUM(sc.saldo_corretto_ref)                     AS saldo_portafoglio_corr_ref,
   COUNT(m.id_movimento)                          AS num_operazioni_totali,
   SUM(c.fido_accordato)                          AS fido_totale,
   MAX(m.data_contabile)                          AS data_ultima_operazione,
@@ -129,7 +125,6 @@ SELECT
   c.id_cliente,
   c.data_apertura,
   sc.saldo_calcolato                             AS saldo_attuale,
-  sc.saldo_corretto_ref                          AS saldo_corretto_ref,
   t.id_tasso,
   t.tasso_annuo,
   t.data_fine                                    AS scadenza_tasso,
@@ -139,13 +134,9 @@ SELECT
     DAY
   )                                              AS giorni_residui,
 
-  ROUND(sc.saldo_calcolato * t.tasso_annuo, 2)  AS interessi_annui_lordi,
-  ROUND(sc.saldo_calcolato * t.tasso_annuo / 12, 2)
-                                                AS interessi_mensili_lordi,
-  ROUND(sc.saldo_calcolato * (t.tasso_annuo / 100), 2)
-                                                AS interessi_annui_corretti,
-  ROUND(sc.saldo_calcolato * (t.tasso_annuo / 100) * 0.74, 2)
-                                                AS interessi_annui_netti_ref,
+  ROUND(sc.saldo_calcolato * (t.tasso_annuo / 100), 2) AS interessi_annui_lordi, -- BUG-FIX: Tasso diviso per 100
+  ROUND(sc.saldo_calcolato * (t.tasso_annuo / 100) / 12, 2) AS interessi_mensili_lordi,
+  ROUND(sc.saldo_calcolato * (t.tasso_annuo / 100) * 0.74, 2) AS interessi_annui_netti_ref,
 
   CURRENT_TIMESTAMP()                           AS _loaded_at
 
