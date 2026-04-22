@@ -50,6 +50,8 @@ FROM (
   FROM `phrasal-method-484415-g7.banca_raw.clienti`
   WHERE id_cliente IS NOT NULL
     AND codice_fiscale IS NOT NULL
+    AND LENGTH(codice_fiscale) = 16 -- Aggiunta condizione di lunghezza valida per CF
+    AND REGEXP_CONTAINS(codice_fiscale, r'^[A-Z0-9]+$') -- Aggiunta condizione di formato valido per CF
 )
 WHERE _rn = 1;
 
@@ -157,7 +159,7 @@ FROM (
   FROM `phrasal-method-484415-g7.banca_raw.movimenti`
   WHERE id_movimento IS NOT NULL
     AND id_conto     IS NOT NULL
-    AND importo      > 0
+    AND importo      > 0 -- Mantenuta la condizione di importo positivo come da regola di business
     AND tipo_movimento IN ('ACCREDITO', 'ADDEBITO')
 )
 WHERE _rn = 1;
