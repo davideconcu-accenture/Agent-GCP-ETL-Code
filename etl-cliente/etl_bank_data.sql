@@ -1,8 +1,8 @@
 -- ================================================================
--- ETL SIMULATO — bank_data
+-- ETL SIMULATO — banca_raw
 -- Architettura 3-layer:
 --   RAW      -> tabelle sorgenti già popolate (clienti, conti,
---               movimenti, reclami, pacchetti) in `bank_data`
+--               movimenti, reclami, pacchetti) in `banca_raw`
 --   STAGING  -> aggregazioni pre-calcolate per cliente (stg_*)
 --   MART     -> tabella finale cliente_360 (dm_*)
 --
@@ -21,7 +21,7 @@
 -- stg_cliente_conti
 --   KPI sui conti correnti del cliente
 -- ----------------------------------------------------------------
-CREATE OR REPLACE TABLE `phrasal-method-484415-g7.bank_data.stg_cliente_conti` AS
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_raw.stg_cliente_conti` AS
 SELECT
   c.cliente_id,
   COUNT(*)                                    AS num_conti,
@@ -31,7 +31,7 @@ SELECT
   MIN(c.data_apertura)                        AS data_primo_conto,
   MAX(c.data_apertura)                        AS data_ultimo_conto,
   DATE_DIFF(CURRENT_DATE(), MIN(c.data_apertura), YEAR) AS anni_anzianita
-FROM `phrasal-method-484415-g7.bank_data.conti` AS c
+FROM `phrasal-method-484415-g7.banca_raw.conti` AS c
 GROUP BY c.cliente_id;
 
 
@@ -39,13 +39,13 @@ GROUP BY c.cliente_id;
 -- stg_cliente_movimenti
 --   KPI sui movimenti ultimi 12 mesi (per cliente via join conti)
 -- ----------------------------------------------------------------
-CREATE OR REPLACE TABLE `phrasal-method-484415-g7.bank_data.stg_cliente_movimenti` AS
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_raw.stg_cliente_movimenti` AS
 WITH mov_cli AS (
   SELECT
     co.cliente_id,
     m.*
-  FROM `phrasal-method-484415-g7.bank_data.movimenti` AS m
-  JOIN `phrasal-method-484415-g7.bank_data.conti`     AS co
+  FROM `phrasal-method-484415-g7.banca_raw.movimenti` AS m
+  JOIN `phrasal-method-484415-g7.banca_raw.conti`     AS co
     USING (conto_id)
   WHERE m.data_operazione >= DATE_SUB(CURRENT_DATE(), INTERVAL 12 MONTH)
 )
@@ -70,7 +70,7 @@ GROUP BY cliente_id;
 -- stg_cliente_reclami
 --   KPI sui reclami del cliente
 -- ----------------------------------------------------------------
-CREATE OR REPLACE TABLE `phrasal-method-484415-g7.bank_data.stg_cliente_reclami` AS
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_raw.stg_cliente_reclami` AS
 SELECT
   cliente_id,
   COUNT(*)                                      AS num_reclami_totali,
@@ -83,7 +83,7 @@ SELECT
   SUM(IFNULL(rimborso_importo, 0))              AS tot_rimborsi,
   AVG(soddisfazione)                            AS soddisfazione_media,
   MAX(data_apertura)                            AS data_ultimo_reclamo
-FROM `phrasal-method-484415-g7.bank_data.reclami`
+FROM `phrasal-method-484415-g7.banca_raw.reclami`
 GROUP BY cliente_id;
 
 
@@ -91,7 +91,7 @@ GROUP BY cliente_id;
 -- stg_cliente_categoria_spesa
 --   Categoria di spesa top per ogni cliente (ultimi 12 mesi)
 -- ----------------------------------------------------------------
-CREATE OR REPLACE TABLE `phrasal-method-484415-g7.bank_data.stg_cliente_categoria_spesa` AS
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_raw.stg_cliente_categoria_spesa` AS
 WITH spese_cat AS (
   SELECT
     co.cliente_id,
@@ -101,8 +101,8 @@ WITH spese_cat AS (
       PARTITION BY co.cliente_id
       ORDER BY SUM(-m.importo) DESC
     ) AS rn
-  FROM `phrasal-method-484415-g7.bank_data.movimenti` AS m
-  JOIN `phrasal-method-484415-g7.bank_data.conti`     AS co USING (conto_id)
+  FROM `phrasal-method-484415-g7.banca_raw.movimenti` AS m
+  JOIN `phrasal-method-484415-g7.banca_raw.conti`     AS co USING (conto_id)
   WHERE m.stato = 'COMPLETATO'
     AND m.importo < 0
     AND m.data_operazione >= DATE_SUB(CURRENT_DATE(), INTERVAL 12 MONTH)
@@ -118,7 +118,7 @@ WHERE rn = 1;
 --   Customer 360: una riga per cliente con tutti i KPI derivati
 -- ================================================================
 
-CREATE OR REPLACE TABLE `phrasal-method-484415-g7.bank_data.dm_cliente_360` AS
+CREATE OR REPLACE TABLE `phrasal-method-484415-g7.banca_raw.dm_cliente_360` AS
 SELECT
   -- Anagrafica
   cl.cliente_id,
@@ -194,12 +194,12 @@ SELECT
 
   CURRENT_TIMESTAMP()                              AS etl_loaded_at
 
-FROM `phrasal-method-484415-g7.bank_data.clienti`              AS cl
-LEFT JOIN `phrasal-method-484415-g7.bank_data.pacchetti`       AS p  ON cl.pacchetto_id = p.pacchetto_id
-LEFT JOIN `phrasal-method-484415-g7.bank_data.stg_cliente_conti`          AS co USING (cliente_id)
-LEFT JOIN `phrasal-method-484415-g7.bank_data.stg_cliente_movimenti`      AS mv USING (cliente_id)
-LEFT JOIN `phrasal-method-484415-g7.bank_data.stg_cliente_reclami`        AS rc USING (cliente_id)
-LEFT JOIN `phrasal-method-484415-g7.bank_data.stg_cliente_categoria_spesa` AS cs USING (cliente_id);
+FROM `phrasal-method-484415-g7.banca_raw.clienti`              AS cl
+LEFT JOIN `phrasal-method-484415-g7.banca_raw.pacchetti`       AS p  ON cl.pacchetto_id = p.pacchetto_id
+LEFT JOIN `phrasal-method-484415-g7.banca_raw.stg_cliente_conti`          AS co USING (cliente_id)
+LEFT JOIN `phrasal-method-484415-g7.banca_raw.stg_cliente_movimenti`      AS mv USING (cliente_id)
+LEFT JOIN `phrasal-method-484415-g7.banca_raw.stg_cliente_reclami`        AS rc USING (cliente_id)
+LEFT JOIN `phrasal-method-484415-g7.banca_raw.stg_cliente_categoria_spesa` AS cs USING (cliente_id);
 
 
 -- ================================================================
@@ -207,15 +207,15 @@ LEFT JOIN `phrasal-method-484415-g7.bank_data.stg_cliente_categoria_spesa` AS cs
 -- ================================================================
 
 -- Numero righe per layer
--- SELECT 'stg_cliente_conti'              AS tbl, COUNT(*) FROM `phrasal-method-484415-g7.bank_data.stg_cliente_conti`
--- UNION ALL SELECT 'stg_cliente_movimenti',       COUNT(*) FROM `phrasal-method-484415-g7.bank_data.stg_cliente_movimenti`
--- UNION ALL SELECT 'stg_cliente_reclami',         COUNT(*) FROM `phrasal-method-484415-g7.bank_data.stg_cliente_reclami`
--- UNION ALL SELECT 'stg_cliente_categoria_spesa', COUNT(*) FROM `phrasal-method-484415-g7.bank_data.stg_cliente_categoria_spesa`
--- UNION ALL SELECT 'dm_cliente_360',              COUNT(*) FROM `phrasal-method-484415-g7.bank_data.dm_cliente_360`;
+-- SELECT 'stg_cliente_conti'              AS tbl, COUNT(*) FROM `phrasal-method-484415-g7.banca_raw.stg_cliente_conti`
+-- UNION ALL SELECT 'stg_cliente_movimenti',       COUNT(*) FROM `phrasal-method-484415-g7.banca_raw.stg_cliente_movimenti`
+-- UNION ALL SELECT 'stg_cliente_reclami',         COUNT(*) FROM `phrasal-method-484415-g7.banca_raw.stg_cliente_reclami`
+-- UNION ALL SELECT 'stg_cliente_categoria_spesa', COUNT(*) FROM `phrasal-method-484415-g7.banca_raw.stg_cliente_categoria_spesa`
+-- UNION ALL SELECT 'dm_cliente_360',              COUNT(*) FROM `phrasal-method-484415-g7.banca_raw.dm_cliente_360`;
 
 -- Top 10 clienti per AUM con engagement e churn risk
 -- SELECT cliente_id, nome, cognome, segmento, value_tier, aum,
 --        engagement_status, churn_risk_reclami, num_reclami_totali
--- FROM `phrasal-method-484415-g7.bank_data.dm_cliente_360`
+-- FROM `phrasal-method-484415-g7.banca_raw.dm_cliente_360`
 -- ORDER BY aum DESC
 -- LIMIT 10;
