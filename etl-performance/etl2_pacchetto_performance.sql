@@ -67,29 +67,29 @@ SELECT
   IFNULL(c.num_clienti_totali, 0)                    AS num_clienti_totali,
   IFNULL(c.num_clienti_attivi, 0)                    AS num_clienti_attivi,
   IFNULL(c.num_clienti_churned, 0)                   AS num_clienti_churned,
-  SAFE_DIVIDE(c.num_clienti_churned,
+  SAFE_DIVIDE(IFNULL(c.num_clienti_churned, 0),
               c.num_clienti_totali)                  AS churn_rate,
   IFNULL(c.aum_totale, 0)                            AS aum_totale,
   IFNULL(c.aum_medio, 0)                             AS aum_medio,
   IFNULL(c.score_medio, 0)                           AS score_credito_medio,
 
   -- Revenue stimata da canone ricorrente
-  c.num_clienti_totali * p.canone_mensile            AS revenue_mensile_stimata,
-  c.num_clienti_totali * p.canone_mensile * 12       AS revenue_annua_stimata,
+  IFNULL(c.num_clienti_totali, 0) * p.canone_mensile            AS revenue_mensile_stimata,
+  IFNULL(c.num_clienti_totali, 0) * p.canone_mensile * 12       AS revenue_annua_stimata,
 
   -- KPI reclami
   IFNULL(r.num_reclami, 0)                           AS num_reclami,
   IFNULL(r.num_reclami_critici, 0)                   AS num_reclami_critici,
-  SAFE_DIVIDE(r.num_reclami, c.num_clienti_totali)   AS reclami_per_cliente,
+  SAFE_DIVIDE(IFNULL(r.num_reclami, 0), c.num_clienti_totali)   AS reclami_per_cliente,
   IFNULL(r.tot_rimborsi_erogati, 0)                  AS tot_rimborsi_erogati,
   r.soddisfazione_media,
-  r.tasso_accoglimento,
+  IFNULL(r.tasso_accoglimento, 0)                    AS tasso_accoglimento,
 
   -- Classificazione performance
   CASE
-    WHEN c.num_clienti_attivi >= 30 AND r.soddisfazione_media >= 3.5 THEN 'STAR'
-    WHEN c.num_clienti_attivi >= 15                                  THEN 'GROWING'
-    WHEN c.num_clienti_attivi >= 5                                   THEN 'NICHE'
+    WHEN IFNULL(c.num_clienti_attivi, 0) >= 30 AND IFNULL(r.soddisfazione_media, 0) >= 3.5 THEN 'STAR'
+    WHEN IFNULL(c.num_clienti_attivi, 0) >= 15                                  THEN 'GROWING'
+    WHEN IFNULL(c.num_clienti_attivi, 0) >= 5                                   THEN 'NICHE'
     ELSE                                                                  'UNDERPERFORMING'
   END                                                AS performance_tier,
 
