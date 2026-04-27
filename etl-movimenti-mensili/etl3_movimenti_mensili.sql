@@ -67,7 +67,7 @@ SELECT
   COUNTIF(canale = 'WEB')                           AS num_ops_web,
   COUNTIF(canale = 'POS')                           AS num_ops_pos,
   COUNTIF(canale = 'ATM')                           AS num_ops_atm,
-  COUNTIF(canale = 'FILIALE')                       AS num_ops_filiale,
+  COUNTIF(canale = 'BANCA')                         AS num_ops_filiale, -- FIX: 'FILIALE' era sbagliato, il valore corretto è 'BANCA'
 
   -- Mix canale digitale
   SAFE_DIVIDE(COUNTIF(canale IN ('APP','WEB')),
