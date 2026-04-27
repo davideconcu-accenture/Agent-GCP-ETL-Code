@@ -36,10 +36,11 @@ WHERE m.stato = 'COMPLETATO';
 
 -- ----------------------------------------------------------------
 -- dm_movimenti_mensili_segmento (MART)
---   Serie temporale: una riga per (mese, segmento)
+--   Serie temporale: una riga per (anno, mese, segmento)
 -- ----------------------------------------------------------------
 CREATE OR REPLACE TABLE `phrasal-method-484415-g7.bank_data.dm_movimenti_mensili_segmento` AS
 SELECT
+  EXTRACT(YEAR FROM data_operazione)                AS anno, -- FIX: Aggiunto anno
   EXTRACT(MONTH FROM data_operazione)               AS mese,
   segmento,
 
@@ -67,7 +68,7 @@ SELECT
   COUNTIF(canale = 'WEB')                           AS num_ops_web,
   COUNTIF(canale = 'POS')                           AS num_ops_pos,
   COUNTIF(canale = 'ATM')                           AS num_ops_atm,
-  COUNTIF(canale = 'FILIALE')                       AS num_ops_filiale,
+  COUNTIF(canale = 'BANCA')                         AS num_ops_banca, -- FIX: Sostituito 'FILIALE' con 'BANCA'
 
   -- Mix canale digitale
   SAFE_DIVIDE(COUNTIF(canale IN ('APP','WEB')),
@@ -75,5 +76,5 @@ SELECT
 
   CURRENT_TIMESTAMP()                               AS etl_loaded_at
 FROM `phrasal-method-484415-g7.bank_data.stg_movimenti_arricchiti`
-GROUP BY mese, segmento
-ORDER BY mese, segmento;
+GROUP BY anno, mese, segmento -- FIX: Aggiunto anno al group by
+ORDER BY anno, mese, segmento; -- FIX: Aggiunto anno all'order by
