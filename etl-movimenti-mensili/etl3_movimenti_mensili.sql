@@ -61,6 +61,8 @@ SELECT
   COUNTIF(tipo_operazione = 'BONIFICO_IN')          AS num_bonifici_in,
   COUNTIF(tipo_operazione = 'BONIFICO_OUT')         AS num_bonifici_out,
   COUNTIF(tipo_operazione = 'PRELIEVO')             AS num_prelievi,
+  COUNTIF(tipo_operazione = 'CANONE')               AS num_canoni,
+  COUNTIF(tipo_operazione = 'INVESTIMENTO')         AS num_investimenti,
 
   -- Breakdown per canale
   COUNTIF(canale = 'APP')                           AS num_ops_app,
