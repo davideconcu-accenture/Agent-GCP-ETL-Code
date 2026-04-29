@@ -74,8 +74,8 @@ SELECT
   IFNULL(c.score_medio, 0)                           AS score_credito_medio,
 
   -- Revenue stimata da canone ricorrente
-  c.num_clienti_totali * p.canone_mensile            AS revenue_mensile_stimata,
-  c.num_clienti_totali * p.canone_mensile * 12       AS revenue_annua_stimata,
+  c.num_clienti_attivi * p.canone_mensile            AS revenue_mensile_stimata,
+  c.num_clienti_attivi * p.canone_mensile * 12       AS revenue_annua_stimata,
 
   -- KPI reclami
   IFNULL(r.num_reclami, 0)                           AS num_reclami,
