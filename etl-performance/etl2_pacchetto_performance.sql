@@ -74,8 +74,8 @@ SELECT
   IFNULL(c.score_medio, 0)                           AS score_credito_medio,
 
   -- Revenue stimata da canone ricorrente
-  c.num_clienti_totali * p.canone_mensile            AS revenue_mensile_stimata,
-  c.num_clienti_totali * p.canone_mensile * 12       AS revenue_annua_stimata,
+  c.num_clienti_attivi * p.canone_mensile            AS revenue_mensile_stimata,
+  c.num_clienti_attivi * p.canone_mensile * 12       AS revenue_annua_stimata,
 
   -- KPI reclami
   IFNULL(r.num_reclami, 0)                           AS num_reclami,
@@ -87,7 +87,7 @@ SELECT
 
   -- Classificazione performance
   CASE
-    WHEN c.num_clienti_attivi >= 30 AND r.soddisfazione_media >= 3.5 THEN 'STAR'
+    WHEN c.num_clienti_attivi >= 30 AND COALESCE(r.soddisfazione_media, 5.0) >= 3.5 THEN 'STAR' -- BUG: La soddisfazione media è NULL se non ci sono reclami, penalizzando il tier. Aggiunto COALESCE.
     WHEN c.num_clienti_attivi >= 15                                  THEN 'GROWING'
     WHEN c.num_clienti_attivi >= 5                                   THEN 'NICHE'
     ELSE                                                                  'UNDERPERFORMING'
