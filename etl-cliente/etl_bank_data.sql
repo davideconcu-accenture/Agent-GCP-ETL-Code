@@ -53,7 +53,7 @@ SELECT
   cliente_id,
   COUNT(*)                                         AS num_movimenti_12m,
   SUM(IF(importo > 0, importo, 0))                 AS tot_entrate_12m,
-  SUM(IF(importo < 0, importo, 0))                 AS tot_uscite_12m,
+  SUM(IF(importo < 0, -importo, 0))                AS tot_uscite_12m, -- BUG FIX: le uscite devono essere positive
   SUM(importo)                                     AS saldo_netto_12m,
   AVG(importo)                                     AS importo_medio,
   COUNTIF(tipo_operazione = 'ACCREDITO_STIPENDIO') AS num_stipendi,
@@ -177,10 +177,11 @@ SELECT
     ELSE                                          'MASS'
   END                                              AS value_tier,
 
+  -- BUG FIX: la logica precedente sottostimava il rischio
   CASE
-    WHEN IFNULL(rc.num_reclami_priorita_alta,0) >= 2 THEN 'HIGH'
-    WHEN IFNULL(rc.num_reclami_totali,0)        >= 3 THEN 'MEDIUM'
-    WHEN IFNULL(rc.num_reclami_totali,0)        >= 1 THEN 'LOW'
+    WHEN IFNULL(rc.num_reclami_priorita_alta, 0) >= 1 THEN 'HIGH'
+    WHEN IFNULL(rc.num_reclami_totali, 0)        >= 3 THEN 'MEDIUM'
+    WHEN IFNULL(rc.num_reclami_totali, 0)        >= 1 THEN 'LOW'
     ELSE                                                 'NONE'
   END                                              AS churn_risk_reclami,
 
