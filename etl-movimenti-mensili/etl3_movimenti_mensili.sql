@@ -61,6 +61,7 @@ SELECT
   COUNTIF(tipo_operazione = 'BONIFICO_IN')          AS num_bonifici_in,
   COUNTIF(tipo_operazione = 'BONIFICO_OUT')         AS num_bonifici_out,
   COUNTIF(tipo_operazione = 'PRELIEVO')             AS num_prelievi,
+  COUNTIF(tipo_operazione NOT IN ('ACCREDITO_STIPENDIO', 'PAGAMENTO_CARTA', 'BONIFICO_IN', 'BONIFICO_OUT', 'PRELIEVO')) AS num_altri_tipi,
 
   -- Breakdown per canale
   COUNTIF(canale = 'APP')                           AS num_ops_app,
@@ -68,6 +69,7 @@ SELECT
   COUNTIF(canale = 'POS')                           AS num_ops_pos,
   COUNTIF(canale = 'ATM')                           AS num_ops_atm,
   COUNTIF(canale = 'FILIALE')                       AS num_ops_filiale,
+  COUNTIF(canale NOT IN ('APP', 'WEB', 'POS', 'ATM', 'FILIALE')) AS num_altri_canali,
 
   -- Mix canale digitale
   SAFE_DIVIDE(COUNTIF(canale IN ('APP','WEB')),
