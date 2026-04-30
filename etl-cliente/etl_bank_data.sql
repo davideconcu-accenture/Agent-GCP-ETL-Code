@@ -53,14 +53,14 @@ SELECT
   cliente_id,
   COUNT(*)                                         AS num_movimenti_12m,
   SUM(IF(importo > 0, importo, 0))                 AS tot_entrate_12m,
-  SUM(IF(importo < 0, importo, 0))                 AS tot_uscite_12m,
+  SUM(IF(importo < 0, -importo, 0))                AS tot_uscite_12m, -- MODIFICATO: ora le uscite sono valori positivi
   SUM(importo)                                     AS saldo_netto_12m,
   AVG(importo)                                     AS importo_medio,
   COUNTIF(tipo_operazione = 'ACCREDITO_STIPENDIO') AS num_stipendi,
   SUM(IF(tipo_operazione = 'ACCREDITO_STIPENDIO', importo, 0)) AS tot_stipendi,
   COUNTIF(tipo_operazione = 'PAGAMENTO_CARTA')     AS num_pag_carta,
   COUNTIF(categoria = 'INVESTMENT')                AS num_investimenti,
-  SUM(IF(categoria = 'INVESTMENT', -importo, 0))   AS tot_investimenti,
+  SUM(IF(categoria = 'INVESTMENT', -importo, 0)) AS tot_investimenti,
   MAX(data_operazione)                             AS data_ultimo_movimento
 FROM mov_cli
 GROUP BY cliente_id;
@@ -209,8 +209,7 @@ LEFT JOIN `phrasal-method-484415-g7.bank_data.stg_cliente_categoria_spesa` AS cs
 -- Numero righe per layer
 -- SELECT 'stg_cliente_conti'              AS tbl, COUNT(*) FROM `phrasal-method-484415-g7.bank_data.stg_cliente_conti`
 -- UNION ALL SELECT 'stg_cliente_movimenti',       COUNT(*) FROM `phrasal-method-484415-g7.bank_data.stg_cliente_movimenti`
--- UNION ALL SELECT 'stg_cliente_reclami',         COUNT(*) FROM `phrasal-method-484415-g7.bank_data.stg_cliente_reclami`
--- UNION ALL SELECT 'stg_cliente_categoria_spesa', COUNT(*) FROM `phrasal-method-484415-g7.bank_data.stg_cliente_categoria_spesa`
+-- UNION ALL SELECT 'stg_cliente_reclami',         COUNT(*) FROM `phrasal-method-444415-g7.bank_data.stg_cliente_reclami`
 -- UNION ALL SELECT 'dm_cliente_360',              COUNT(*) FROM `phrasal-method-484415-g7.bank_data.dm_cliente_360`;
 
 -- Top 10 clienti per AUM con engagement e churn risk
